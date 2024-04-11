@@ -2,9 +2,12 @@ package handler
 
 import (
 	"fmt"
+	"gobject-storage/meta"
+	"gobject-storage/util"
 	"io"
 	"net/http"
 	"os"
+	"time"
 )
 
 // UploadHandler: Deal with file upload
@@ -24,19 +27,28 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Failed to get data, err:%s\n", err.Error())
 		}
 		defer file.Close()
+		fileMeta := meta.FileMeta{
+			FileName: head.Filename,
+			Location: "/tmp/" + head.Filename,
+			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
+		}
 
-		newFile, err := os.Create("/tmp/" + head.Filename)
+		newFile, err := os.Create(fileMeta.Location)
 		if err != nil {
 			fmt.Printf("Failed to create file, err:%s\n", err.Error())
 			return
 		}
 		defer newFile.Close()
 
-		_, err = io.Copy(newFile, file)
+		fileMeta.FileSize, err = io.Copy(newFile, file)
 		if err != nil {
 			fmt.Print("Failed to save data into f")
 			return
 		}
+
+		newFile.Seek(0, 0)
+		fileMeta.FileSha1 = util.FileSha1(newFile)
+		meta.UpdateFileMeta(fileMeta)
 
 		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
 	}
