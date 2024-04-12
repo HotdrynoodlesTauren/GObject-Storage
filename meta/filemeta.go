@@ -11,6 +11,7 @@ type FileMeta struct {
 
 var fileMetas map[string]FileMeta
 
+// executes as soon as the package is imported
 func init() {
 	fileMetas = make(map[string]FileMeta)
 }

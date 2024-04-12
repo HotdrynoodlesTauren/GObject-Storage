@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"gobject-storage/meta"
 	"gobject-storage/util"
@@ -20,19 +21,21 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		io.WriteString(w, string(data))
+
 	} else if r.Method == "POST" {
-		// receive file stream and save to local cataglog
+		// receive file stream
 		file, head, err := r.FormFile("file")
 		if err != nil {
 			fmt.Printf("Failed to get data, err:%s\n", err.Error())
 		}
 		defer file.Close()
+
+		// create a local newFile in buffer
 		fileMeta := meta.FileMeta{
 			FileName: head.Filename,
 			Location: "/tmp/" + head.Filename,
 			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
 		}
-
 		newFile, err := os.Create(fileMeta.Location)
 		if err != nil {
 			fmt.Printf("Failed to create file, err:%s\n", err.Error())
@@ -40,6 +43,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer newFile.Close()
 
+		// copy the file stream to the newFile just created
 		fileMeta.FileSize, err = io.Copy(newFile, file)
 		if err != nil {
 			fmt.Print("Failed to save data into f")
@@ -57,4 +61,18 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 // UploadSucHandler: generate response when the upload is finished.
 func UploadSucHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Upload finished!")
+}
+
+// GetFileMetaHandler: get meta data of a file
+func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	filehash := r.Form["filehash"][0]
+	fMeta := meta.GetFileMeta(filehash)
+	data, err := json.Marshal(fMeta)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
 }
