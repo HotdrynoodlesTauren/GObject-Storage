@@ -21,7 +21,12 @@ func UpdateFileMeta(fmeta FileMeta) {
 	fileMetas[fmeta.FileSha1] = fmeta
 }
 
-// GetFileMeta: get the file meta from sha1
+// GetFileMeta: get the file meta with file sha1 hash value
 func GetFileMeta(fileSha1 string) FileMeta {
 	return fileMetas[fileSha1]
+}
+
+// RemoveFileMetaL: remove the file meta with file sha1 hash value
+func RemoveFileMeta(fileSha1 string) {
+	delete(fileMetas, fileSha1)
 }

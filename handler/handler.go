@@ -52,6 +52,8 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		newFile.Seek(0, 0)
 		fileMeta.FileSha1 = util.FileSha1(newFile)
+		// Just for debugging
+		fmt.Println(fileMeta.FileSha1)
 		meta.UpdateFileMeta(fileMeta)
 
 		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
@@ -77,6 +79,28 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+// 第一章的视频好像漏掉了这个部分, 暂时先贴上, 不知道后面有没有用
+// FileQueryHandler : 查询批量的文件元信息
+func FileQueryHandler(w http.ResponseWriter, r *http.Request) {
+	// r.ParseForm()
+
+	// limitCnt, _ := strconv.Atoi(r.Form.Get("limit"))
+	// username := r.Form.Get("username")
+	// //fileMetas, _ := meta.GetLastFileMetasDB(limitCnt)
+	// userFiles, err := dblayer.QueryUserFileMetas(username, limitCnt)
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// data, err := json.Marshal(userFiles)
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	return
+	// }
+	// w.Write(data)
+}
+
 // DownloadHandler: download file with file hash value
 func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -100,4 +124,43 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	// tell the client that the file should be downloaded
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+fm.FileName+"\"")
 	w.Write(data)
+}
+
+// FileMetaUpdateHandler: modify file meta info
+func FileMetaUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	opType := r.Form.Get("op")
+	fileSha1 := r.Form.Get("filehash")
+	newFileName := r.Form.Get("filename")
+
+	if opType != "0" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	curFileMeta := meta.GetFileMeta((fileSha1))
+	curFileMeta.FileName = newFileName
+	meta.UpdateFileMeta(curFileMeta)
+	
+	data, err := json.Marshal(curFileMeta)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+// FileDeleteHandler: modify file meta info
+func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fileSha1 := r.Form.Get("filehash")
+	fMeta := meta.GetFileMeta(fileSha1)
+	os.Remove(fMeta.Location)
+	meta.RemoveFileMeta(fileSha1)
+	w.WriteHeader(http.StatusOK)
 }
