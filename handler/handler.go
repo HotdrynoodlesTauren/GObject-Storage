@@ -76,3 +76,28 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(data)
 }
+
+// DownloadHandler: download file with file hash value
+func DownloadHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	fshar1 := r.Form.Get("filehash")
+	fm := meta.GetFileMeta(fshar1)
+	f, err := os.Open(fm.Location)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	data, err := io.ReadAll(f)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	// tell the client that content being sent is a binary data stream (often used when sending files)
+	w.Header().Set("Content-Type", "application/octect-stream")
+	// tell the client that the file should be downloaded
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+fm.FileName+"\"")
+	w.Write(data)
+}
