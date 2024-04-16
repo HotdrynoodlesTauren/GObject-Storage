@@ -36,7 +36,7 @@ func GetFileMeta(fileSha1 string) FileMeta {
 	return fileMetas[fileSha1]
 }
 
-// GetFileMeta: get the file meta with file sha1 hash value from db
+// GetFileMetaDB: get the file meta with file sha1 hash value from db
 func GetFileMetaDB(fileSha1 string) (*FileMeta, error) {
 	tfile, err := mydb.GetFileMeta(fileSha1)
 	if tfile == nil || err != nil {
