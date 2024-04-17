@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	dblayer "gobject-storage/db"
 	"gobject-storage/meta"
 	"gobject-storage/util"
 	"io"
@@ -52,11 +53,19 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		newFile.Seek(0, 0)
 		fileMeta.FileSha1 = util.FileSha1(newFile)
-		// Just for debugging
-		fmt.Println(fileMeta.FileSha1)
 		//meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
-		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
+
+		// update tbl_user_file
+		r.ParseForm()
+		username := r.Form.Get("username")
+		fmt.Println(username + " is uploading")
+		suc := dblayer.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		if suc {
+			http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
+		} else {
+			w.Write([]byte("Upload Failed"))
+		}
 	}
 }
 
