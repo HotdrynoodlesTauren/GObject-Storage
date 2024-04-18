@@ -24,3 +24,6 @@ go.work
 mysql/
 mysql_ssl/
 table.sql
+
+# Test
+test/test_file/

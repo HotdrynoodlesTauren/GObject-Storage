@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -89,26 +90,25 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-// 第一章的视频好像漏掉了这个部分, 暂时先贴上, 不知道后面有没有用
-// FileQueryHandler : 查询批量的文件元信息
+// FileQueryHandler : batch query user file meta
 func FileQueryHandler(w http.ResponseWriter, r *http.Request) {
-	// r.ParseForm()
+	r.ParseForm()
 
-	// limitCnt, _ := strconv.Atoi(r.Form.Get("limit"))
-	// username := r.Form.Get("username")
-	// //fileMetas, _ := meta.GetLastFileMetasDB(limitCnt)
-	// userFiles, err := dblayer.QueryUserFileMetas(username, limitCnt)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	return
-	// }
+	limitCnt, _ := strconv.Atoi(r.Form.Get("limit"))
+	username := r.Form.Get("username")
+	//fileMetas, _ := meta.GetLastFileMetasDB(limitCnt)
+	userFiles, err := dblayer.QueryUserFileMetas(username, limitCnt)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	// data, err := json.Marshal(userFiles)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	return
-	// }
-	// w.Write(data)
+	data, err := json.Marshal(userFiles)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
 }
 
 // DownloadHandler: download file with file hash value
@@ -173,4 +173,51 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	os.Remove(fMeta.Location)
 	meta.RemoveFileMeta(fileSha1)
 	w.WriteHeader(http.StatusOK)
+}
+
+
+// TryFastUploadHandler: 
+func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	username := r.Form.Get("username")
+	filehash := r.Form.Get("filehash")
+	filename := r.Form.Get("filename")
+	filesize, _ := strconv.Atoi(r.Form.Get("filesize"))
+
+	// Get the file record with the same hash from tbl_file
+	fileMeta, err := meta.GetFileMetaDB(filehash)
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// If not record then 
+	if fileMeta == nil {
+		resp := util.RespMsg {
+			Code: -1,
+			Msg: "Fast upload failed, visit ordinary endpoint",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
+
+	// If there is a record, then write file meta to tbl_user_file, return true
+	suc := dblayer.OnUserFileUploadFinished(username, filehash, filename, int64(filesize))
+	if suc {
+		resp := util.RespMsg {
+			Code: 0,
+			Msg: "Fast upload successed",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	} else {
+		resp := util.RespMsg {
+			Code: -2,
+			Msg: "Fast upload failed, try later",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
 }
