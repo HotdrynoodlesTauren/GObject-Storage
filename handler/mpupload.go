@@ -72,7 +72,7 @@ func UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 	defer rConn.Close()
 
 	// obtain the handle to the file, used to store the block content
-	fpath := "/data/" + uploadID + "/" + chunkIndex
+	fpath := "./test/data/" + uploadID + "/" + chunkIndex
 	os.MkdirAll(path.Dir(fpath), 0744)
 	fd, err := os.Create(fpath)
 	if err != nil {

@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -9,7 +8,7 @@ import (
 
 var (
 	pool *redis.Pool
-	redisHost = "127.0.0.1:6397"
+	redisHost = "127.0.0.1:6379"
 	// redisPass = "testupload" // 不确定需不需要
 )
 
@@ -23,7 +22,6 @@ func newRedisPool() *redis.Pool {
 			// establish a connection
 			c, err := redis.Dial("tcp", redisHost)
 			if err != nil {
-				fmt.Println(err)
 				return nil, err
 			}
 

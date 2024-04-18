@@ -97,6 +97,7 @@ func main() {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Print("error in init endpoint 1111111: ")
 		fmt.Println(err.Error())
 		os.Exit(-1)
 	}
@@ -107,7 +108,7 @@ func main() {
 	fmt.Printf("uploadid: %s  chunksize: %d\n", uploadID, chunkSize)
 
 	// 3. 请求分块上传接口
-	filename := "9.mp4"
+	filename := "test_file/9.mp4"
 	tURL := "http://localhost:8080/file/mpupload/uppart?" +
 		"username=admin&token=" + token + "&uploadid=" + uploadID
 	multipartUpload(filename, tURL, chunkSize)

@@ -27,3 +27,4 @@ table.sql
 
 # Test
 test/test_file/
+test/data/
