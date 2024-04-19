@@ -3,13 +3,18 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	cmn "gobject-storage/common"
+	cfg "gobject-storage/config"
 	dblayer "gobject-storage/db"
 	"gobject-storage/meta"
+	"gobject-storage/mq"
+	"gobject-storage/store/oss"
 	"gobject-storage/util"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -53,7 +58,32 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		newFile.Seek(0, 0)
+		//data, _ := io.ReadAll(newFile)
+
 		fileMeta.FileSha1 = util.FileSha1(newFile)
+
+		ossPath := "oss/" + fileMeta.FileSha1
+		/*err = oss.Bucket().PutObjectFromFile(ossPath, fileMeta.Location)
+		if err != nil {
+			fmt.Println(err.Error())
+			w.Write([]byte("Upload failed!"))
+			return
+		}
+		fileMeta.Location = ossPath*/
+		data := mq.TransferData{
+			FileHash:      fileMeta.FileSha1,
+			CurLocation:   fileMeta.Location,
+			DestLocation:  ossPath,
+			DestStoreType: cmn.StoreOSS,
+		}
+		pubData, _ := json.Marshal(data)
+		suc := mq.Publish(cfg.TransExchangeName,
+			cfg.TransOSSRoutingKey,
+			pubData)
+		if !suc {
+
+		}
+
 		//meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
 
@@ -61,7 +91,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		username := r.Form.Get("username")
 		fmt.Println(username + " is uploading")
-		suc := dblayer.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		suc = dblayer.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
 		if suc {
 			http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
 		} else {
@@ -116,8 +146,9 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	fshar1 := r.Form.Get("filehash")
-	fm := meta.GetFileMeta(fshar1)
+	fm, _ := meta.GetFileMetaDB(fshar1)
 	f, err := os.Open(fm.Location)
+	fmt.Println("caonima", fm.Location)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -175,8 +206,7 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-
-// TryFastUploadHandler: 
+// TryFastUploadHandler:
 func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
@@ -193,11 +223,11 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If not record then 
+	// If not record then
 	if fileMeta == nil {
-		resp := util.RespMsg {
+		resp := util.RespMsg{
 			Code: -1,
-			Msg: "Fast upload failed, visit ordinary endpoint",
+			Msg:  "Fast upload failed, visit ordinary endpoint",
 		}
 		w.Write(resp.JSONBytes())
 		return
@@ -206,18 +236,40 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
 	// If there is a record, then write file meta to tbl_user_file, return true
 	suc := dblayer.OnUserFileUploadFinished(username, filehash, filename, int64(filesize))
 	if suc {
-		resp := util.RespMsg {
+		resp := util.RespMsg{
 			Code: 0,
-			Msg: "Fast upload successed",
+			Msg:  "Fast upload successed",
 		}
 		w.Write(resp.JSONBytes())
 		return
 	} else {
-		resp := util.RespMsg {
+		resp := util.RespMsg{
 			Code: -2,
-			Msg: "Fast upload failed, try later",
+			Msg:  "Fast upload failed, try later",
 		}
 		w.Write(resp.JSONBytes())
 		return
+	}
+}
+
+// DownloadURLHandler: Generates the download URL for a file
+func DownloadURLHandler(w http.ResponseWriter, r *http.Request) {
+	filehash := r.Form.Get("filehash")
+	// Retrieve record from the file table
+	row, _ := dblayer.GetFileMeta(filehash)
+	// TODO: Determine if the file exists in OSS, Ceph, or locally
+	if strings.HasPrefix(row.FileAddr.String, "/tmp") {
+		username := r.Form.Get("username")
+		token := r.Form.Get("token")
+		tmpUrl := fmt.Sprintf("http://%s/file/download?filehash=%s&username=%s&token=%s",
+			r.Host, filehash, username, token)
+
+		w.Write([]byte(tmpUrl))
+	} else if strings.HasPrefix(row.FileAddr.String, "/ceph") {
+		// TODO: Ceph download URL
+	} else if strings.HasPrefix(row.FileAddr.String, "oss/") {
+		// OSS download URL
+		signedURL := oss.DownloadURL(row.FileAddr.String)
+		w.Write([]byte(signedURL))
 	}
 }
