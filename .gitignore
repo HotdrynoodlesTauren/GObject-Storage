@@ -25,6 +25,12 @@ mysql/
 mysql_ssl/
 table.sql
 
+# Ceph
+ceph/
+
+# RabbitMQ
+rabbitmq/
+
 # Test
 test/test_file/
 test/data/
