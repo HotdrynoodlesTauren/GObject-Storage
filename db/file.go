@@ -65,7 +65,6 @@ func GetFileMeta(filehash string) (*TableFile, error) {
 	return &tfile, nil
 }
 
-
 // GetFileMetaList : 从mysql批量获取文件元信息
 func GetFileMetaList(limit int) ([]TableFile, error) {
 	stmt, err := mydb.DBConn().Prepare(
@@ -119,6 +118,34 @@ func OnFileRemoved(filehash string) bool {
 	if rf, err := ret.RowsAffected(); nil == err {
 		if rf <= 0 {
 			fmt.Printf("File with hash:%s not uploaded", filehash)
+		}
+		return true
+	}
+	return false
+}
+
+// UpdateFileLocation : Update the storage address of a file (e.g., when a file is moved)
+func UpdateFileLocation(filehash string, fileaddr string) bool {
+	// Prepare the SQL statement
+	stmt, err := mydb.DBConn().Prepare(
+		"UPDATE tbl_file SET `file_addr`=? WHERE `file_sha1`=? LIMIT 1")
+	if err != nil {
+		fmt.Println("Failed to prepare SQL statement, err:" + err.Error())
+		return false
+	}
+	defer stmt.Close()
+
+	// Execute the SQL statement
+	ret, err := stmt.Exec(fileaddr, filehash)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	// Check if the update was successful
+	if rf, err := ret.RowsAffected(); nil == err {
+		if rf <= 0 {
+			fmt.Printf("Failed to update file location, filehash:%s", filehash)
 		}
 		return true
 	}

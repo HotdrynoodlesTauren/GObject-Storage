@@ -34,3 +34,6 @@ rabbitmq/
 # Test
 test/test_file/
 test/data/
+
+# OSS config
+config/oss.go
