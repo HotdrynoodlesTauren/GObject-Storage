@@ -77,7 +77,9 @@ func multipartUpload(filename string, targetURL string, chunkSize int) error {
 func main() {
 	username := "yizhou"
 	token := "8594e59b21e2ce361c5b08a1cbb5d385661f6bf1"
-	filehash := "753612f1497d1e31812d22dee5c5bf7fa102675b"
+	// username := "yachen"
+	// token := "1eed06508ab40441bbc5c58d82b5e7de6623014d"
+	filehash := "6194c7f8e6861569f43df9ee3a168f76b1ef4dba"
 
 	// 1. 请求初始化分块上传接口
 	resp, err := http.PostForm(
@@ -108,7 +110,7 @@ func main() {
 	fmt.Printf("uploadid: %s  chunksize: %d\n", uploadID, chunkSize)
 
 	// 3. 请求分块上传接口
-	filename := "test_file/9.mp4"
+	filename := "test_file/horse.MOV"
 	tURL := "http://localhost:8080/file/mpupload/uppart?" +
 		"username=admin&token=" + token + "&uploadid=" + uploadID
 	multipartUpload(filename, tURL, chunkSize)
@@ -121,7 +123,7 @@ func main() {
 			"token":    {token},
 			"filehash": {filehash},
 			"filesize": {"132489256"},
-			"filename": {"9.mp4"},
+			"filename": {"horse.MOV"},
 			"uploadid": {uploadID},
 		})
 
