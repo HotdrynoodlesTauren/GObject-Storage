@@ -37,3 +37,4 @@ test/data/
 
 # OSS config
 config/oss.go
+config/user_info.csv

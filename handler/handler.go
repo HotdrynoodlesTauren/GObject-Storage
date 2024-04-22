@@ -148,7 +148,6 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	fshar1 := r.Form.Get("filehash")
 	fm, _ := meta.GetFileMetaDB(fshar1)
 	f, err := os.Open(fm.Location)
-	fmt.Println("caonima", fm.Location)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -254,6 +253,7 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 // DownloadURLHandler: Generates the download URL for a file
 func DownloadURLHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
 	filehash := r.Form.Get("filehash")
 	// Retrieve record from the file table
 	row, _ := dblayer.GetFileMeta(filehash)

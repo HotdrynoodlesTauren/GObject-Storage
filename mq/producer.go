@@ -8,7 +8,7 @@ import (
 
 // Publish : Publishes a message
 func Publish(exchange, routingKey string, msg []byte) bool {
-	// Initialize the channel
+	// check if channel is available
 	if !initChannel(config.RabbitURL) {
 		return false
 	}
@@ -19,7 +19,7 @@ func Publish(exchange, routingKey string, msg []byte) bool {
 		routingKey,
 		false, // If there is no corresponding queue, the message will be discarded
 		false, //
-		amqp.Publishing{
+		amqp.Publishing{ 
 			ContentType: "text/plain",
 			Body:        msg}) {
 		return true

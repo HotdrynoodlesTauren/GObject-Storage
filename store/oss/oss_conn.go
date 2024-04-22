@@ -12,14 +12,19 @@ var ossCli *oss.Client
 // Client : create oss client object
 func Client() *oss.Client {
 	if ossCli != nil {
+		fmt.Print("Connected to oss11111 OK:")
+		fmt.Println(ossCli)
 		return ossCli
 	}
 	ossCli, err := oss.New(cfg.OSSEndpoint,
 		cfg.OSSAccesskeyID, cfg.OSSAccessKeySecret)
 	if err != nil {
+		fmt.Print("Connected to oss failed:")
 		fmt.Println(err.Error())
 		return nil
 	}
+	fmt.Print("Connected to oss22222 OK:")
+	fmt.Println(ossCli)
 	return ossCli
 }
 

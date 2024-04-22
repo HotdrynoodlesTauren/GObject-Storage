@@ -46,6 +46,7 @@ func initChannel(rabbitHost string) bool {
 		return true
 	}
 
+	// Get a rabbitmq connection
 	var err error
 	conn, err = amqp.Dial(rabbitHost)
 	if err != nil {
@@ -53,6 +54,7 @@ func initChannel(rabbitHost string) bool {
 		return false
 	}
 
+	// Open a channel for publishing and receiving messages
 	channel, err = conn.Channel()
 	if err != nil {
 		log.Println(err.Error())
