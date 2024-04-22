@@ -7,25 +7,25 @@ Yi Zhou, Yachen Yin
 Leveraging the power of Golang and industry-leading technologies such as `MySQL`, `Redis`, `Aliyun` and `RabbitMQ`, this project aims to deliver a robust solution for storing and managing user files while ensuring high performance, fault tolerance, and data integrity.
 
 ## Key Features:
-1. **Distributed Architecture: **
+### 1. Distributed Architecture: 
 GObjectStorage utilizes a distributed architecture to ensure scalability and fault tolerance.
 
-2. **Object Storage: **
+### Object Storage:
 Users can store and retrieve objects of any size, including files, documents, images, and multimedia content.
 
-3. **Access Control: **
+### Access Control:
 User metadata stored in MySQL enables secure and personalized storage by linking each user's storage space with their profile。
 
-4. **Duplicate Item Detection: **
+### Duplicate Item Detection:
 Utilizing file metadata stored in `MySQL`, the system optimizes storage efficiency through hash algorithms designed to identify duplicate items.
 
-5. **Block Metadata Cache: **
+### Block Metadata Cache:
 `Redis` stores block-level metadata, enabling chunked and resumable uploads with efficient management and seamless file upload resumption.
 
-6. **Message Queue: **
+### Message Queue:
 `RabbitMQ` facilitates communication and coordination between system components, ensuring reliable message delivery and enabling asynchronous processing of storage operations.
 
-7. **Scalability and Reliability: **
+### Scalability and Reliability:
 Leveraging `Aliyun OSS`'s distributed storage capabilities, our system achieves automatic load balancing, data redundancy, fault tolerance, and high availability through efficient replication and data striping.
 
 
