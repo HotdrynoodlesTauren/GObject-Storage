@@ -30,7 +30,9 @@ Leveraging `Aliyun OSS`'s distributed storage capabilities, our system achieves 
 
 ## Preferred Environment Settings
 Mac OS Version 13+
+
 Docker version 25.0.3
+
 Go Version 1.21.1
 
 ## Prerequisites
