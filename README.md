@@ -28,6 +28,10 @@ Utilizing file metadata stored in `MySQL`, the system optimizes storage efficien
 #### Scalability and Reliability:
 Leveraging `Aliyun OSS`'s distributed storage capabilities, our system achieves automatic load balancing, data redundancy, fault tolerance, and high availability through efficient replication and data striping.
 
+## Preferred Environment Settings
+Mac OS Version 13+
+Docker version 25.0.3
+Go Version 1.21.1
 
 ## Prerequisites
 ### 1. Go Language
@@ -38,14 +42,15 @@ go mod tidy
 ```
 
 ### 2. Setup MySQL Server
-1. Prepare a MySQL Instance. If desired, set up a lead-follower based cluster.
-2. Find `db/mysql/conn.go` and modify the following line according to your MySQL setup:
+1. Prepare a MySQL 5.7 Instance within a Docker container. If desired, set up a lead-follower based cluster.
+2. Creat the target database and tables in the Mysql Instance.
+3. Find `db/mysql/conn.go` and modify the following lines according to your MySQL setup:
 ```
 db, _ = sql.Open("mysql", "<root username>:<root pwd>@tcp(127.0.0.1:<port used for Mysql>)/<database name>?charset=utf8")
 ```
 
 ### 3. Setup Redis Server
-1. Prepare a Redis server.
+1. Prepare a Redis 5.0.3 server within a Docker container.
 2. Find `cache/redis/conn.go` and modify the following line according to your Redis setup:
 ```
 redisHost = "127.0.0.1:<port used for Redis>"
@@ -68,7 +73,7 @@ const (
 **Do not share your __OSSAccesskeyID__ and __OSSAccessKeySecret__ with others!**
 
 ### 4. Setup RabbitMQ
-1. Prepare for a RabbitMQ server.
+1. Prepare for a RabbitMQ server within a Docker container.
 2. Generate a `Exchange` service and a message `Queue`.
 3. Find `config/rabbit.go` and modify the following line according to your RabbitMQ setup:
 ```
