@@ -46,6 +46,66 @@ go mod tidy
 ### 2. Setup MySQL Server
 1. Prepare a MySQL 5.7 Instance within a Docker container. If desired, set up a lead-follower based cluster.
 2. Creat the target database and tables in the Mysql Instance.
+```
+create database <database name> default character set utf8;
+use <database name>;
+
+CREATE TABLE `tbl_file` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `file_sha1` CHAR(40) NOT NULL DEFAULT '' COMMENT 'File hash',
+    `file_name` VARCHAR(256) NOT NULL DEFAULT '' COMMENT 'File name',
+    `file_size` BIGINT(20) DEFAULT 0 COMMENT 'File size',
+    `file_addr` VARCHAR(1024) NOT NULL DEFAULT '' COMMENT 'File storage location',
+    `created_at` DATETIME DEFAULT NOW() COMMENT 'Creation date',
+    `updated_at` DATETIME DEFAULT NOW() ON UPDATE CURRENT_TIMESTAMP() COMMENT 'Update date',
+    `status` INT(11) NOT NULL DEFAULT 0 COMMENT 'Status (available/disabled/deleted)',
+    `ext1` INT(11) DEFAULT 0 COMMENT 'Reserved field 1',
+    `ext2` TEXT COMMENT 'Reserved field 2',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_file_hash` (`file_sha1`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tbl_user` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `user_name` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'Username',
+    `email` VARCHAR(64) DEFAULT '' COMMENT 'Email address',
+    `phone` VARCHAR(128) DEFAULT '' COMMENT 'Phone number',
+    `email_validated` TINYINT(1) DEFAULT 0 COMMENT 'Whether the email is validated',
+    `phone_validated` TINYINT(1) DEFAULT 0 COMMENT 'Whether the phone is validated',
+    `signup_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Registration date',
+    `last_active` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last active time',
+    `profile` TEXT COMMENT 'User profile',
+    `status` INT(11) NOT NULL DEFAULT 0 COMMENT 'Account status (enabled/disabled/locked/deleted flag, etc.)',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_phone` (`phone`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tbl_user_token` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `user_name` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'Username',
+    `user_token` CHAR(40) NOT NULL DEFAULT '' COMMENT 'User login token',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_username` (`user_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `tbl_user_file` (
+    `id` INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `user_name` VARCHAR(64) NOT NULL,
+    `file_shal` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'File hash',
+    `file_size` BIGINT(20) DEFAULT '0' COMMENT 'File size in bytes',
+    `file_name` VARCHAR(256) NOT NULL DEFAULT '' COMMENT 'File name',
+    `upload_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Upload time',
+    `last_update` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last modification time',
+    `status` INT(11) NOT NULL DEFAULT '0' COMMENT 'File status (0: normal, 1: deleted, 2: disabled)',
+    UNIQUE KEY `idx_user_file` (`user_name`, `file_shal`),
+    KEY `idx_status` (`status`),
+    KEY `idx_user_id` (`user_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+alter table tbl_user_file drop index idx_user_file;
+```
+
 3. Find `db/mysql/conn.go` and modify the following lines according to your MySQL setup:
 ```
 db, _ = sql.Open("mysql", "<root username>:<root pwd>@tcp(127.0.0.1:<port used for Mysql>)/<database name>?charset=utf8")
